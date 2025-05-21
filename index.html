@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo de Equipamentos Avançado</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.5s ease, color 0.5s ease;
+        }
+        header {
+            transition: background-color 0.5s ease, color 0.5s ease;
+        }
+        .product-card {
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out, background-color 0.5s ease, border-color 0.5s ease, color 0.5s ease;
+        }
+        .product-card:hover {
+            transform: translateY(-8px) scale(1.04); /* Efeito flutuante mais pronunciado */
+            box-shadow: 0 12px 25px rgba(0,0,0,0.12), 0 8px 10px rgba(0,0,0,0.1);
+        }
+        .btn-edit, .btn-theme, .btn-action {
+            transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+        }
+        /* Animações */
+        .section-fade-in {
+            animation: sectionFadeInAnimation 0.4s ease-out forwards; /* Duração ligeiramente menor e ease-out */
+        }
+        @keyframes sectionFadeInAnimation {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .card-appear {
+            opacity: 0;
+            transform: translateY(20px) scale(0.95);
+            animation: cardAppearAnimation 0.5s ease-out forwards;
+        }
+        @keyframes cardAppearAnimation {
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        .hidden-section { display: none; opacity: 0; }
+        .visible-section { display: block; opacity: 1; }
+
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.05);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            border: 2px solid transparent;
+            background-clip: content-box;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0,0,0,0.4);
+        }
+        /* Estilo para o select da paleta */
+        #palette-selector {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            padding-right: 2rem; /* Espaço para a seta */
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23FFF' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.5rem center;
+            background-size: 1.25em 1.25em;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+        /* Add Product Modal Scrollbar */
+        #add-product-modal .overflow-y-auto::-webkit-scrollbar-track {
+            background: #e2e8f0; /* slate-200 */
+        }
+        #add-product-modal .overflow-y-auto::-webkit-scrollbar-thumb {
+            background: #94a3b8; /* slate-400 */
+        }
+        #add-product-modal .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+            background: #64748b; /* slate-500 */
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased">
+
+    <header class="text-white p-4 md:p-5 shadow-xl sticky top-0 z-50">
+        <div class="container mx-auto flex flex-col sm:flex-row justify-between items-center">
+            <h1 id="main-title" class="text-2xl md:text-3xl font-bold tracking-tight mb-3 sm:mb-0">Catálogo de Equipamentos</h1>
+            <div class="flex items-center space-x-2 sm:space-x-3">
+                <button id="add-product-btn" class="btn-action text-white font-semibold py-2 px-3 rounded-lg transition-colors text-sm items-center justify-center flex">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 inline mr-1">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                    Novo
+                </button>
+                <div id="palette-selector-container">
+                    <label for="palette-selector" class="text-sm sr-only">Tema:</label>
+                    <select id="palette-selector" class="text-white text-sm rounded-lg focus:ring-2 focus:outline-none p-2">
+                        </select>
+                </div>
+                <button id="voltar-lista" class="btn-action hidden text-white font-semibold py-2 px-3 rounded-lg transition-colors text-sm items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 inline mr-1">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
+                    </svg>
+                    Voltar
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main id="app" class="container mx-auto p-4 md:p-6 lg:p-8">
+        <section id="lista-produtos" class="visible-section grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
+            </section>
+
+        <section id="detalhe-produto" class="hidden-section bg-white p-6 md:p-8 rounded-xl shadow-2xl">
+            </section>
+    </main>
+
+    <div id="custom-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-[100]">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full">
+            <h3 id="modal-title" class="text-lg font-semibold mb-4">Editar Campo</h3>
+            <p id="modal-prompt" class="mb-2 text-sm"></p>
+            <input type="text" id="modal-input" class="border border-gray-300 p-2 rounded-md w-full mb-4">
+            <div class="flex justify-end space-x-2">
+                <button id="modal-cancel" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300">Cancelar</button>
+                <button id="modal-ok" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="add-product-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 hidden z-[100]">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h3 id="add-modal-title" class="text-xl font-semibold">Adicionar Novo Produto</h3>
+                <button id="add-modal-close-btn" class="text-3xl font-light hover:text-red-600 transition-colors">&times;</button>
+            </div>
+            <form id="add-product-form" class="space-y-4">
+                <div>
+                    <label for="new-prod-nome" class="block text-sm font-medium text-gray-700 mb-1">Nome do Produto <span class="text-red-500">*</span></label>
+                    <input type="text" id="new-prod-nome" name="nome" required class="border border-gray-300 p-2 rounded-md w-full focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div>
+                    <label for="new-prod-referencias" class="block text-sm font-medium text-gray-700 mb-1">Referências (separadas por vírgula)</label>
+                    <input type="text" id="new-prod-referencias" name="referencias" class="border border-gray-300 p-2 rounded-md w-full focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div>
+                    <label for="new-prod-imagem-url" class="block text-sm font-medium text-gray-700 mb-1">URL da Imagem</label>
+                    <input type="url" id="new-prod-imagem-url" name="imagemUrl" placeholder="https://exemplo.com/imagem.jpg" class="border border-gray-300 p-2 rounded-md w-full focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                 <div>
+                    <label for="new-prod-imagem-file" class="block text-sm font-medium text-gray-700 mb-1">Ou Upload de Imagem</label>
+                    <input type="file" id="new-prod-imagem-file" name="imagemFile" accept="image/*" class="border border-gray-300 p-2 rounded-md w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100">
+                </div>
+                <div>
+                    <label for="new-prod-desc-curta" class="block text-sm font-medium text-gray-700 mb-1">Descrição Curta <span class="text-red-500">*</span></label>
+                    <textarea id="new-prod-desc-curta" name="descricaoCurta" rows="2" required class="border border-gray-300 p-2 rounded-md w-full focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+                </div>
+                <div>
+                    <label for="new-prod-desc-completa" class="block text-sm font-medium text-gray-700 mb-1">Descrição Completa</label>
+                    <textarea id="new-prod-desc-completa" name="descricaoCompleta" rows="3" class="border border-gray-300 p-2 rounded-md w-full focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+                </div>
+                <div>
+                    <label for="new-prod-diferenciais" class="block text-sm font-medium text-gray-700 mb-1">Diferenciais (um por linha)</label>
+                    <textarea id="new-prod-diferenciais" name="diferenciais" rows="3" class="border border-gray-300 p-2 rounded-md w-full focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+                </div>
+                
+                <h4 class="text-md font-semibold pt-3 mb-1 text-gray-800">Especificações Técnicas</h4>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
+                    <div>
+                        <label for="new-prod-spec-modelo" class="block text-xs font-medium text-gray-600">Modelo</label>
+                        <input type="text" id="new-prod-spec-modelo" name="specModelo" class="border border-gray-300 p-2 rounded-md w-full text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label for="new-prod-spec-medidas" class="block text-xs font-medium text-gray-600">Medidas (AxLxP)</label>
+                        <input type="text" id="new-prod-spec-medidas" name="specMedidas" class="border border-gray-300 p-2 rounded-md w-full text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label for="new-prod-spec-peso" class="block text-xs font-medium text-gray-600">Peso</label>
+                        <input type="text" id="new-prod-spec-peso" name="specPeso" class="border border-gray-300 p-2 rounded-md w-full text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label for="new-prod-spec-potencia" class="block text-xs font-medium text-gray-600">Potência</label>
+                        <input type="text" id="new-prod-spec-potencia" name="specPotencia" class="border border-gray-300 p-2 rounded-md w-full text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-6">
+                    <button type="button" id="add-modal-cancel-btn" class="px-5 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors font-medium">Cancelar</button>
+                    <button type="submit" id="add-modal-save-btn" class="px-5 py-2 text-white rounded-md font-medium transition-colors">Salvar Produto</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <footer class="text-center p-6 mt-12 text-sm">
+        <p>&copy; <span id="currentYear"></span> Seu Catálogo Inc. Todos os direitos reservados.</p>
+        <p>Desenvolvido com ❤️ para Kelvin.</p>
+    </footer>
+
+    <script>
+        // --- Dados dos Produtos (Exemplos) ---
+        let produtos = [
+            {
+                id: 'conservador-proteinas',
+                nome: 'Conservador de Proteínas',
+                referencias: ['PRCPROT-04', 'PRCPROT-06', 'PRCPROT-08'],
+                imagem: 'https://placehold.co/400x300/E0F2FE/075985?text=Conservador+Proteínas',
+                descricaoCurta: 'Mantém a suculência e sabor dos alimentos.',
+                diferenciais: ['Evita grelhar na hora', 'Mantém suculência', 'Opera a 80°C abaixo', 'Design intuitivo'],
+                especificacoes: { cabecalhos: ["Modelo", "Medidas", "Peso", "Capacidade", "Potência", "Consumo"], linhas: [['PRCPROT-04', '405x571x531mm', '20,5kg', '4 cubas', '800W', '0,4kWh'], ['PRCPROT-06', '405x769x531mm', '24,9kg', '6 cubas', '1200W', '0,6kWh']]},
+                descricaoCompleta: "Ideal para cozinhas profissionais que buscam eficiência na conservação de proteínas. Este equipamento garante que os alimentos mantenham suas características originais por mais tempo."
+            },
+            {
+                id: 'estufas-quadradas',
+                nome: 'Estufas Quadradas',
+                referencias: ['PRVR-30', 'PRVR-40', 'PRVR-50'],
+                imagem: 'https://placehold.co/400x300/D1FAE5/065F46?text=Estufas+Quadradas',
+                descricaoCurta: 'Cubas GN, controles individuais.',
+                diferenciais: ['Cubas GN 1/3x100mm', 'Controles individuais por prateleira', 'Pés de borracha com regulagem'],
+                especificacoes: { cabecalhos: ["Modelo", "Medidas", "Tensão", "Bandejas", "Potência", "Consumo"], linhas: [['PRVR-30', '340x470x375mm', '127/220V', '3', '250W', '0,19kWh'], ['PRVR-40', '340x620x375mm', '127/220V', '4', '250W', '0,19kWh']]},
+                descricaoCompleta: "As estufas quadradas são perfeitas para manter alimentos aquecidos e prontos para servir, com flexibilidade de modelos e capacidades para atender diversas demandas."
+            },
+             {
+                id: 'char-broiler',
+                nome: 'Char Broiler',
+                referencias: ['PRCB-2100', 'PRCB-8000'],
+                imagem: 'https://placehold.co/400x300/FEF3C7/92400E?text=Char+Broiler',
+                descricaoCurta: 'Grelhas esmaltadas, antiaderentes e autolimpantes.',
+                diferenciais: ['Alimentação de gás em baixa pressão', 'Grelhas esmaltadas, removíveis, antiaderentes e autolimpantes', 'Queimador com gaveta móvel', 'Pedestal opcional (PRCB-2100)'],
+                especificacoes: { cabecalhos: ["Modelo", "Medidas", "Peso", "Consumo"], linhas: [['PRCB-2100', '225x1026x537mm', '3kg', '1.2 kg/h GLP'], ['PRCB-8000', '216x833x545mm', '22,3kg', '0.96 kg/h GLP']]},
+                descricaoCompleta: "O Char Broiler é essencial para quem busca o sabor autêntico de grelhados, com praticidade na limpeza e manutenção. Ideal para carnes, aves e vegetais."
+            },
+            {
+                id: 'forno-esteira-pizza',
+                nome: 'Forno Esteira para Pizza',
+                referencias: ['PRFE-400 NEW ELÉTRICO', 'PRFE-400 NEW HÍBRIDO'],
+                imagem: 'https://placehold.co/400x300/FFE4E6/9F1239?text=Forno+Pizza',
+                descricaoCurta: 'Controle automático de tempo e temperatura.',
+                diferenciais: ['Acendimento automático (modelo gás)', 'Controle automático tempo/temperatura', 'Controle individual superior/inferior', 'Temperatura máxima de 400°C'],
+                especificacoes: { cabecalhos: ["Modelo", "Medidas", "Peso", "Tensão", "Consumo Elétrico"], linhas: [['PRFE-400 NH', '498x1410x808mm', '66kg', '220V/380V', '5,4kWh'], ['PRFE-400 NE', '498x1410x755mm', '66kg', '220V/380V', '12,8kWh']]},
+                descricaoCompleta: "Produza pizzas com perfeição e agilidade. Os fornos esteira oferecem controle preciso e cocção uniforme, otimizando sua produção."
+            }
+        ];
+
+        // --- Elementos do DOM ---
+        const listaProdutosEl = document.getElementById('lista-produtos');
+        const detalheProdutoEl = document.getElementById('detalhe-produto');
+        const botaoVoltarListaEl = document.getElementById('voltar-lista');
+        const currentYearEl = document.getElementById('currentYear');
+        const paletteSelectorEl = document.getElementById('palette-selector');
+        const bodyEl = document.body;
+        const headerEl = document.querySelector('header');
+        const mainTitleEl = document.getElementById('main-title');
+        const footerEl = document.querySelector('footer');
+        const addProductBtn = document.getElementById('add-product-btn');
+
+        // Modal Edição Simples
+        const customModalEl = document.getElementById('custom-modal');
+        const modalTitleEl = document.getElementById('modal-title');
+        const modalPromptEl = document.getElementById('modal-prompt');
+        const modalInputEl = document.getElementById('modal-input');
+        const modalOkButton = document.getElementById('modal-ok');
+        const modalCancelButton = document.getElementById('modal-cancel');
+        let currentModalResolve = null;
+
+        // Modal Adicionar Produto
+        const addProductModalEl = document.getElementById('add-product-modal');
+        const addProductFormEl = document.getElementById('add-product-form');
+        const addModalCloseBtn = document.getElementById('add-modal-close-btn');
+        const addModalCancelBtn = document.getElementById('add-modal-cancel-btn');
+        const addModalSaveBtn = document.getElementById('add-modal-save-btn');
+        const addModalTitleEl = document.getElementById('add-modal-title');
+
+
+        // --- Paletas de Cores ---
+        const paletas = [
+            { name: 'Padrão Céu Azul', bodyBg: 'bg-slate-100', bodyText: 'text-slate-800', headerBg: 'bg-sky-700', headerText: 'text-white', accent: 'sky', cardBgs: ['bg-sky-100', 'bg-emerald-100', 'bg-amber-100', 'bg-rose-100', 'bg-violet-100'], cardTextColors: ['text-sky-800', 'text-emerald-800', 'text-amber-800', 'text-rose-800', 'text-violet-800'], cardBorderColors: ['border-sky-300', 'border-emerald-300', 'border-amber-300', 'border-rose-300', 'border-violet-300'], scrollThumb: 'rgba(14, 116, 144, 0.6)'},
+            { name: 'Floresta Esmeralda', bodyBg: 'bg-green-50', bodyText: 'text-green-900', headerBg: 'bg-emerald-700', headerText: 'text-white', accent: 'emerald', cardBgs: ['bg-emerald-100', 'bg-lime-100', 'bg-teal-100', 'bg-cyan-100', 'bg-green-100'], cardTextColors: ['text-emerald-800', 'text-lime-800', 'text-teal-800', 'text-cyan-800', 'text-green-800'], cardBorderColors: ['border-emerald-300', 'border-lime-300', 'border-teal-300', 'border-cyan-300', 'border-green-300'], scrollThumb: 'rgba(5, 150, 105, 0.6)'},
+            { name: 'Pôr do Sol Âmbar', bodyBg: 'bg-amber-50', bodyText: 'text-amber-900', headerBg: 'bg-amber-600', headerText: 'text-white', accent: 'amber', cardBgs: ['bg-amber-100', 'bg-yellow-100', 'bg-orange-100', 'bg-red-100', 'bg-pink-100'], cardTextColors: ['text-amber-800', 'text-yellow-800', 'text-orange-800', 'text-red-800', 'text-pink-800'], cardBorderColors: ['border-amber-300', 'border-yellow-300', 'border-orange-300', 'border-red-300', 'border-pink-300'], scrollThumb: 'rgba(217, 119, 6, 0.6)'},
+            { name: 'Jardim de Rosas', bodyBg: 'bg-rose-50', bodyText: 'text-rose-900', headerBg: 'bg-rose-600', headerText: 'text-white', accent: 'rose', cardBgs: ['bg-rose-100', 'bg-pink-100', 'bg-fuchsia-100', 'bg-purple-100', 'bg-red-100'], cardTextColors: ['text-rose-800', 'text-pink-800', 'text-fuchsia-800', 'text-purple-800', 'text-red-800'], cardBorderColors: ['border-rose-300', 'border-pink-300', 'border-fuchsia-300', 'border-purple-300', 'border-red-300'], scrollThumb: 'rgba(225, 29, 72, 0.6)'},
+            { name: 'Noite Violeta', bodyBg: 'bg-violet-100', bodyText: 'text-violet-900', headerBg: 'bg-violet-700', headerText: 'text-white', accent: 'violet', cardBgs: ['bg-violet-200', 'bg-purple-200', 'bg-indigo-200', 'bg-blue-200', 'bg-fuchsia-200'], cardTextColors: ['text-violet-900', 'text-purple-900', 'text-indigo-900', 'text-blue-900', 'text-fuchsia-900'], cardBorderColors: ['border-violet-400', 'border-purple-400', 'border-indigo-400', 'border-blue-400', 'border-fuchsia-400'], scrollThumb: 'rgba(109, 40, 217, 0.6)'},
+            { name: 'Praia Tropical', bodyBg: 'bg-cyan-50', bodyText: 'text-cyan-900', headerBg: 'bg-cyan-600', headerText: 'text-white', accent: 'cyan', cardBgs: ['bg-cyan-100', 'bg-teal-100', 'bg-sky-100', 'bg-blue-100', 'bg-emerald-100'], cardTextColors: ['text-cyan-800', 'text-teal-800', 'text-sky-800', 'text-blue-800', 'text-emerald-800'], cardBorderColors: ['border-cyan-300', 'border-teal-300', 'border-sky-300', 'border-blue-300', 'border-emerald-300'], scrollThumb: 'rgba(8, 145, 178, 0.6)'},
+            { name: 'Outono Terroso', bodyBg: 'bg-orange-100', bodyText: 'text-orange-900', headerBg: 'bg-orange-700', headerText: 'text-white', accent: 'orange', cardBgs: ['bg-orange-200', 'bg-amber-200', 'bg-yellow-200', 'bg-red-200', 'bg-lime-100'], cardTextColors: ['text-orange-900', 'text-amber-900', 'text-yellow-900', 'text-red-900', 'text-lime-800'], cardBorderColors: ['border-orange-400', 'border-amber-400', 'border-yellow-400', 'border-red-400', 'border-lime-300'], scrollThumb: 'rgba(194, 65, 12, 0.6)'},
+            { name: 'Monocromático Elegante', bodyBg: 'bg-gray-200', bodyText: 'text-gray-800', headerBg: 'bg-gray-800', headerText: 'text-white', accent: 'gray', cardBgs: ['bg-gray-100', 'bg-slate-100', 'bg-zinc-100', 'bg-neutral-100', 'bg-stone-100'], cardTextColors: ['text-gray-700', 'text-slate-700', 'text-zinc-700', 'text-neutral-700', 'text-stone-700'], cardBorderColors: ['border-gray-300', 'border-slate-300', 'border-zinc-300', 'border-neutral-300', 'border-stone-300'], scrollThumb: 'rgba(55, 65, 81, 0.6)'},
+            { name: 'Vibração Retrô', bodyBg: 'bg-yellow-100', bodyText: 'text-yellow-900', headerBg: 'bg-yellow-600', headerText: 'text-gray-900', accent: 'yellow', cardBgs: ['bg-orange-200', 'bg-lime-200', 'bg-teal-200', 'bg-amber-200', 'bg-red-200'], cardTextColors: ['text-orange-800', 'text-lime-800', 'text-teal-800', 'text-amber-800', 'text-red-800'], cardBorderColors: ['border-orange-400', 'border-lime-400', 'border-teal-400', 'border-amber-400', 'border-red-400'], scrollThumb: 'rgba(202, 138, 4, 0.6)'},
+            { name: 'Doce Algodão', bodyBg: 'bg-pink-50', bodyText: 'text-pink-800', headerBg: 'bg-pink-400', headerText: 'text-white', accent: 'pink', cardBgs: ['bg-rose-100', 'bg-sky-100', 'bg-purple-100', 'bg-fuchsia-100', 'bg-indigo-100'], cardTextColors: ['text-rose-700', 'text-sky-700', 'text-purple-700', 'text-fuchsia-700', 'text-indigo-700'], cardBorderColors: ['border-rose-300', 'border-sky-300', 'border-purple-300', 'border-fuchsia-300', 'border-indigo-300'], scrollThumb: 'rgba(236, 72, 153, 0.6)'}
+        ];
+        let currentPalette = paletas[0];
+        let cardColorIndex = 0;
+
+        function applyPalette(palette) {
+            currentPalette = palette;
+            paletas.forEach(p => {
+                bodyEl.classList.remove(p.bodyBg, p.bodyText);
+                headerEl.classList.remove(p.headerBg, p.headerText);
+                paletteSelectorEl.classList.remove(p.headerBg.replace('700', '600').replace('800','700'), `border-${p.accent}-500`, `focus:ring-${p.accent}-400`, `focus:border-${p.accent}-400`);
+                [botaoVoltarListaEl, addProductBtn].forEach(btn => btn.classList.remove(`bg-${p.accent}-500`, `hover:bg-${p.accent}-600`));
+                footerEl.classList.remove(p.bodyText.replace('800','600').replace('900','700'));
+                addModalSaveBtn.classList.remove(`bg-${p.accent}-600`, `hover:bg-${p.accent}-700`);
+                addModalTitleEl.classList.remove(`text-${p.accent}-700`);
+            });
+
+            bodyEl.classList.add(palette.bodyBg, palette.bodyText);
+            headerEl.classList.add(palette.headerBg, palette.headerText);
+            mainTitleEl.classList.add(palette.headerText); 
+            paletteSelectorEl.classList.add(palette.headerBg.replace('700', '600').replace('800','700'), `border-${palette.accent}-500`, `focus:ring-${palette.accent}-400`, `focus:border-${palette.accent}-400`);
+            [botaoVoltarListaEl, addProductBtn].forEach(btn => {
+                btn.classList.add(`bg-${palette.accent}-500`, `hover:bg-${palette.accent}-600`, palette.headerText);
+            });
+            footerEl.classList.add(palette.bodyText.replace('800','600').replace('900','700'));
+            addModalSaveBtn.classList.add(`bg-${palette.accent}-600`, `hover:bg-${palette.accent}-700}`);
+            addModalTitleEl.classList.add(`text-${palette.accent}-700`);
+
+
+            let styleTag = document.getElementById('dynamic-scrollbar-style');
+            if (!styleTag) {
+                styleTag = document.createElement('style');
+                styleTag.id = 'dynamic-scrollbar-style';
+                document.head.appendChild(styleTag);
+            }
+            styleTag.textContent = `
+                ::-webkit-scrollbar-thumb { background: ${palette.scrollThumb}; border-radius: 10px; border: 2px solid transparent; background-clip: content-box; }
+                ::-webkit-scrollbar-thumb:hover { background: ${palette.scrollThumb.replace('0.6', '0.7')}; }
+            `;
+
+            renderizarListaProdutos();
+            if (detalheProdutoEl.classList.contains('visible-section')) {
+                const produtoAberto = produtos.find(p => p.id === detalheProdutoEl.dataset.produtoId);
+                if (produtoAberto) renderizarDetalheProduto(produtoAberto);
+            }
+        }
+
+        function populatePaletteSelector() {
+            paletas.forEach((palette, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = palette.name;
+                paletteSelectorEl.appendChild(option);
+            });
+            paletteSelectorEl.onchange = (e) => applyPalette(paletas[e.target.value]);
+        }
+        
+        function showCustomPrompt(title, promptText, currentValue = '') {
+            return new Promise((resolve) => {
+                currentModalResolve = resolve;
+                modalTitleEl.textContent = title;
+                modalPromptEl.textContent = promptText;
+                modalInputEl.value = currentValue;
+                customModalEl.classList.remove('hidden');
+                modalInputEl.focus();
+            });
+        }
+
+        modalOkButton.onclick = () => {
+            if (currentModalResolve) currentModalResolve(modalInputEl.value);
+            customModalEl.classList.add('hidden');
+            currentModalResolve = null;
+        };
+        modalCancelButton.onclick = () => {
+            if (currentModalResolve) currentModalResolve(null);
+            customModalEl.classList.add('hidden');
+            currentModalResolve = null;
+        };
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !customModalEl.classList.contains('hidden')) modalCancelButton.click();
+            if (e.key === 'Escape' && !addProductModalEl.classList.contains('hidden')) addModalCancelBtn.click();
+        });
+
+        async function editarCampo(produto, campo, valorAtual, callback) {
+            const novoValor = await showCustomPrompt(`Editar ${campo}`, `Novo valor para ${campo} de ${produto.nome}:`, valorAtual);
+            if (novoValor !== null && novoValor.trim() !== '') {
+                callback(novoValor);
+                renderizarListaProdutos();
+                if (detalheProdutoEl.classList.contains('visible-section') && detalheProdutoEl.dataset.produtoId === produto.id) {
+                     renderizarDetalheProduto(produto);
+                }
+            } else if (novoValor === '') {
+                await showCustomPrompt("Atenção", "O campo não pode ficar vazio.", ""); 
+            }
+        }
+        
+        function criarBotaoEditar(texto, produto, campo, valorAtual, callback, extraClasses = '') {
+            const btn = document.createElement('button');
+            btn.textContent = texto;
+            btn.className = `btn-edit ${extraClasses} mr-1 mb-1 px-2 py-1 text-xs rounded font-semibold`;
+            btn.classList.add(`bg-${currentPalette.accent}-500`, `hover:bg-${currentPalette.accent}-600`, currentPalette.headerText.includes('white') ? 'text-white' : 'text-black');
+            btn.onclick = (e) => { e.stopPropagation(); editarCampo(produto, campo, valorAtual, callback); };
+            return btn;
+        }
+
+        function criarBotaoUploadImagem(produto, extraClasses = '') {
+            const container = document.createElement('div');
+            container.className = 'inline-block relative';
+            const inputId = `upload-img-${produto.id}-${Date.now()}`;
+            const input = document.createElement('input');
+            input.type = 'file'; input.accept = 'image/*';
+            input.className = 'absolute inset-0 w-full h-full opacity-0 cursor-pointer'; input.id = inputId;
+            input.onchange = (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        produto.imagem = e.target.result; 
+                        renderizarListaProdutos();
+                        if (detalheProdutoEl.classList.contains('visible-section') && detalheProdutoEl.dataset.produtoId === produto.id) {
+                            renderizarDetalheProduto(produto);
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+            const labelButton = document.createElement('label');
+            labelButton.textContent = 'Nova Img';
+            labelButton.className = `btn-edit ${extraClasses} mr-1 mb-1 px-2 py-1 text-xs rounded font-semibold inline-block cursor-pointer`;
+            labelButton.classList.add(`bg-${currentPalette.accent}-500`, `hover:bg-${currentPalette.accent}-600`, currentPalette.headerText.includes('white') ? 'text-white' : 'text-black');
+            container.appendChild(labelButton); container.appendChild(input); 
+            return container;
+        }
+
+        function slugify(text) {
+            return text.toString().toLowerCase().trim()
+                .replace(/\s+/g, '-')           // Replace spaces with -
+                .replace(/[^\w-]+/g, '')       // Remove all non-word chars
+                .replace(/--+/g, '-')         // Replace multiple - with single -
+                .replace(/^-+/, '')             // Trim - from start of text
+                .replace(/-+$/, '');            // Trim - from end of text
+        }
+
+        function renderizarListaProdutos() {
+            listaProdutosEl.innerHTML = ''; 
+            cardColorIndex = 0;
+            produtos.forEach((produto, index) => {
+                const cardBg = currentPalette.cardBgs[cardColorIndex % currentPalette.cardBgs.length];
+                const cardText = currentPalette.cardTextColors[cardColorIndex % currentPalette.cardTextColors.length];
+                const cardBorder = currentPalette.cardBorderColors[cardColorIndex % currentPalette.cardBorderColors.length];
+                cardColorIndex++;
+                const card = document.createElement('div');
+                card.className = `product-card rounded-xl shadow-lg overflow-hidden cursor-pointer border-2 ${cardBg} ${cardText} ${cardBorder} flex flex-col`;
+                card.style.animationDelay = `${index * 0.07}s`; 
+                card.classList.add('card-appear');
+                card.onclick = () => mostrarDetalheProduto(produto.id);
+                const img = document.createElement('img');
+                img.src = produto.imagem; img.alt = `Imagem de ${produto.nome}`;
+                img.className = 'w-full h-52 object-cover'; 
+                img.onerror = () => { img.src = `https://placehold.co/400x300/${cardBg.split('-')[1] || 'CCCCCC'}/${cardText.split('-')[1] || '777777'}?text=Imagem+Faltando`; };
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'p-4 flex flex-col flex-grow';
+                const nomeEl = document.createElement('h3');
+                nomeEl.className = 'text-xl font-bold mb-1'; nomeEl.textContent = produto.nome;
+                const refsEl = document.createElement('p');
+                refsEl.className = 'text-xs opacity-70 mb-2'; refsEl.textContent = `Refs: ${produto.referencias.join(', ')}`;
+                const descCurtaEl = document.createElement('p');
+                descCurtaEl.className = 'text-sm mb-4 flex-grow'; descCurtaEl.textContent = produto.descricaoCurta;
+                const editButtonsDiv = document.createElement('div');
+                editButtonsDiv.className = `mt-auto pt-3 border-t border-opacity-30 ${cardBorder.replace('border-','border-opacity-30 border-')}`; 
+                editButtonsDiv.appendChild(criarBotaoEditar('Editar Nome', produto, 'Nome', produto.nome, (nv) => produto.nome = nv));
+                editButtonsDiv.appendChild(criarBotaoUploadImagem(produto));
+                contentDiv.appendChild(nomeEl); contentDiv.appendChild(refsEl); contentDiv.appendChild(descCurtaEl); contentDiv.appendChild(editButtonsDiv);
+                card.appendChild(img); card.appendChild(contentDiv);
+                listaProdutosEl.appendChild(card);
+            });
+        }
+
+        function renderizarDetalheProduto(produto) {
+            detalheProdutoEl.innerHTML = ''; 
+            detalheProdutoEl.dataset.produtoId = produto.id;
+            const cardBg = currentPalette.cardBgs[produtos.indexOf(produto) % currentPalette.cardBgs.length];
+            const accentColorClass = `text-${currentPalette.accent}-600`; 
+            const detailBgClass = bodyEl.classList.contains('bg-gray-200') ? 'bg-white' : currentPalette.bodyBg.replace('-50','-100').replace('-100','-200'); 
+            detalheProdutoEl.className = `p-6 md:p-8 rounded-xl shadow-2xl ${detailBgClass} h-auto`; // Removido mt-8
+            const closeButton = document.createElement('button');
+            closeButton.innerHTML = '&times;';
+            closeButton.className = `absolute top-4 right-5 text-4xl font-light ${accentColorClass} hover:opacity-70 transition-opacity`;
+            closeButton.onclick = mostrarListaProdutos;
+            detalheProdutoEl.appendChild(closeButton);
+            const nomeEl = document.createElement('h2');
+            nomeEl.className = `text-3xl md:text-4xl font-bold mb-1 ${accentColorClass}`; nomeEl.textContent = produto.nome;
+            detalheProdutoEl.appendChild(nomeEl);
+            const refsEl = document.createElement('p');
+            refsEl.className = `text-sm ${accentColorClass} opacity-80 mb-6`; refsEl.textContent = `Referências: ${produto.referencias.join(', ')}`;
+            detalheProdutoEl.appendChild(refsEl);
+            const layoutDiv = document.createElement('div');
+            layoutDiv.className = 'md:flex md:gap-8 items-start';
+            const imgDiv = document.createElement('div');
+            imgDiv.className = 'md:w-2/5 mb-6 md:mb-0 flex-shrink-0'; 
+            const imgElement = document.createElement('img'); 
+            imgElement.src = produto.imagem; imgElement.alt = `Imagem de ${produto.nome}`;
+            imgElement.className = 'w-full rounded-lg shadow-xl border-4 border-white';
+            imgElement.onerror = () => { imgElement.src = `https://placehold.co/600x400/${cardBg.split('-')[1] || 'CCCCCC'}/${accentColorClass.split('-')[1] || '777777'}?text=Imagem+Indisponível`; };
+            imgDiv.appendChild(imgElement); layoutDiv.appendChild(imgDiv);
+            const infoDiv = document.createElement('div'); infoDiv.className = 'md:w-3/5'; 
+            if (produto.descricaoCompleta) {
+                const descCompletaLabel = document.createElement('h4');
+                descCompletaLabel.className = `text-xl font-semibold mt-0 mb-2 ${accentColorClass}`; descCompletaLabel.textContent = 'Descrição';
+                infoDiv.appendChild(descCompletaLabel);
+                const descCompletaEl = document.createElement('p');
+                descCompletaEl.className = `${currentPalette.bodyText} mb-6 text-justify`; descCompletaEl.textContent = produto.descricaoCompleta;
+                infoDiv.appendChild(descCompletaEl);
+            }
+            const diferenciaisLabel = document.createElement('h4');
+            diferenciaisLabel.className = `text-xl font-semibold mb-2 ${accentColorClass}`; diferenciaisLabel.textContent = 'Diferenciais';
+            infoDiv.appendChild(diferenciaisLabel);
+            const ulDiferenciais = document.createElement('ul');
+            ulDiferenciais.className = `list-disc list-inside ${currentPalette.bodyText} mb-6 space-y-1 pl-1`;
+            produto.diferenciais.forEach(dif => { const li = document.createElement('li'); li.textContent = dif; ulDiferenciais.appendChild(li); });
+            infoDiv.appendChild(ulDiferenciais); layoutDiv.appendChild(infoDiv); detalheProdutoEl.appendChild(layoutDiv);
+            const especificacoesLabel = document.createElement('h4');
+            especificacoesLabel.className = `text-2xl font-semibold mt-8 mb-3 ${accentColorClass}`; especificacoesLabel.textContent = 'Características Técnicas';
+            detalheProdutoEl.appendChild(especificacoesLabel);
+            const tableContainer = document.createElement('div'); tableContainer.className = 'overflow-x-auto shadow-md rounded-lg';
+            const table = document.createElement('table'); table.className = `w-full text-sm text-left ${currentPalette.bodyText.replace('800','700').replace('900','800')}`; 
+            const thead = document.createElement('thead');
+            const tableHeadBg = currentPalette.cardBgs[0].replace('100','200').replace('50','100'); 
+            const tableHeadText = currentPalette.cardTextColors[0];
+            thead.className = `${tableHeadBg} ${tableHeadText} text-xs uppercase`;
+            let trHead = document.createElement('tr');
+            produto.especificacoes.cabecalhos.forEach(cabecalho => { const th = document.createElement('th'); th.scope = 'col'; th.className = 'px-4 py-3 font-semibold'; th.textContent = cabecalho; trHead.appendChild(th); });
+            thead.appendChild(trHead); table.appendChild(thead);
+            const tbody = document.createElement('tbody');
+            produto.especificacoes.linhas.forEach((linha, index) => {
+                const tr = document.createElement('tr');
+                const rowBg = index % 2 === 0 ? detailBgClass.replace('200','50').replace('100','25') : detailBgClass.replace('200','100').replace('100','50'); 
+                tr.className = `${rowBg} border-b ${currentPalette.cardBorderColors[0].replace('300','200')} hover:${rowBg.replace('50','100').replace('25','50')}`;
+                linha.forEach(celula => { const td = document.createElement('td'); td.className = 'px-4 py-3'; td.textContent = celula; tr.appendChild(td); });
+                tbody.appendChild(tr);
+            });
+            table.appendChild(tbody); tableContainer.appendChild(table); detalheProdutoEl.appendChild(tableContainer);
+            const editButtonsDetalheDiv = document.createElement('div');
+            editButtonsDetalheDiv.className = `mt-8 pt-6 border-t ${currentPalette.cardBorderColors[0].replace('300','200')}`; 
+            const editTitle = document.createElement('h4');
+            editTitle.className = `text-xl font-semibold mb-3 ${accentColorClass}`; editTitle.textContent = 'Opções de Edição';
+            editButtonsDetalheDiv.appendChild(editTitle);
+            editButtonsDetalheDiv.appendChild(criarBotaoEditar('Editar Nome', produto, 'Nome', produto.nome, (nv) => produto.nome = nv));
+            editButtonsDetalheDiv.appendChild(criarBotaoUploadImagem(produto));
+            editButtonsDetalheDiv.appendChild(criarBotaoEditar('Editar Desc. Curta', produto, 'Descrição Curta', produto.descricaoCurta, (nv) => produto.descricaoCurta = nv));
+            editButtonsDetalheDiv.appendChild(criarBotaoEditar('Editar Desc. Completa', produto, 'Descrição Completa', produto.descricaoCompleta || '', (nv) => produto.descricaoCompleta = nv));
+            detalheProdutoEl.appendChild(editButtonsDetalheDiv);
+        }
+
+        function mostrarDetalheProduto(produtoId) {
+            const produto = produtos.find(p => p.id === produtoId);
+            if (produto) {
+                listaProdutosEl.classList.remove('visible-section', 'section-fade-in');
+                listaProdutosEl.classList.add('hidden-section');
+                // Removido setTimeout para mostrar detalhes imediatamente
+                renderizarDetalheProduto(produto);
+                detalheProdutoEl.classList.remove('hidden-section'); 
+                detalheProdutoEl.classList.add('visible-section', 'section-fade-in'); 
+                botaoVoltarListaEl.classList.remove('hidden');
+                botaoVoltarListaEl.classList.add('flex'); 
+                window.scrollTo(0, 0); 
+            }
+        }
+
+        function mostrarListaProdutos() {
+            detalheProdutoEl.classList.remove('visible-section', 'section-fade-in');
+            detalheProdutoEl.classList.add('hidden-section');
+            botaoVoltarListaEl.classList.add('hidden');
+            botaoVoltarListaEl.classList.remove('flex');
+            // Adicionado setTimeout para garantir que a animação de saída da pág de detalhes ocorra antes de mostrar a lista
+            setTimeout(() => {
+                listaProdutosEl.classList.remove('hidden-section');
+                listaProdutosEl.classList.add('visible-section');
+                document.querySelectorAll('#lista-produtos .product-card').forEach((card, index) => {
+                    card.style.animationDelay = `${index * 0.07}s`;
+                    card.classList.remove('card-appear'); 
+                    void card.offsetWidth; 
+                    card.classList.add('card-appear');
+                });
+                detalheProdutoEl.dataset.produtoId = ''; 
+                window.scrollTo(0, 0);
+            }, 50); // Pequeno delay para a transição
+        }
+        
+        // --- Funcionalidade Adicionar Produto ---
+        addProductBtn.onclick = () => {
+            addProductFormEl.reset(); // Limpa o formulário
+            addModalTitleEl.textContent = "Adicionar Novo Produto"; // Garante o título correto
+            addModalSaveBtn.textContent = "Salvar Produto";
+            addProductModalEl.classList.remove('hidden');
+        };
+        addModalCloseBtn.onclick = () => addProductModalEl.classList.add('hidden');
+        addModalCancelBtn.onclick = () => addProductModalEl.classList.add('hidden');
+
+        addProductFormEl.onsubmit = async (event) => {
+            event.preventDefault();
+            const formData = new FormData(addProductFormEl);
+            const nome = formData.get('nome').trim();
+            if (!nome) {
+                await showCustomPrompt("Erro", "O nome do produto é obrigatório.", "");
+                return;
+            }
+
+            let imagemFinal = formData.get('imagemUrl').trim();
+            const imagemFile = formData.get('imagemFile');
+
+            if (imagemFile && imagemFile.size > 0) {
+                try {
+                    imagemFinal = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = e => resolve(e.target.result);
+                        reader.onerror = e => reject(e);
+                        reader.readAsDataURL(imagemFile);
+                    });
+                } catch (error) {
+                    console.error("Erro ao ler arquivo de imagem:", error);
+                    await showCustomPrompt("Erro", "Não foi possível processar o arquivo de imagem.", "");
+                    imagemFinal = 'https://placehold.co/400x300/CCCCCC/777777?text=Erro+Imagem';
+                }
+            } else if (!imagemFinal) {
+                imagemFinal = `https://placehold.co/400x300/${currentPalette.cardBgs[0].split('-')[1] || 'CCCCCC'}/${currentPalette.cardTextColors[0].split('-')[1] || '777777'}?text=${encodeURIComponent(nome)}`;
+            }
+            
+            const novoId = slugify(nome) + '-' + Date.now();
+            const referenciasInput = formData.get('referencias').trim();
+            const diferenciaisInput = formData.get('diferenciais').trim();
+
+            const novoProduto = {
+                id: novoId,
+                nome: nome,
+                referencias: referenciasInput ? referenciasInput.split(',').map(r => r.trim()).filter(r => r) : [],
+                imagem: imagemFinal,
+                descricaoCurta: formData.get('descricaoCurta').trim() || "Descrição curta não fornecida.",
+                descricaoCompleta: formData.get('descricaoCompleta').trim(),
+                diferenciais: diferenciaisInput ? diferenciaisInput.split('\n').map(d => d.trim()).filter(d => d) : [],
+                especificacoes: {
+                    cabecalhos: ["Modelo", "Medidas (AxLxP)", "Peso", "Potência"], // Cabeçalhos fixos para o form simplificado
+                    linhas: [
+                        [
+                            formData.get('specModelo').trim(),
+                            formData.get('specMedidas').trim(),
+                            formData.get('specPeso').trim(),
+                            formData.get('specPotencia').trim()
+                        ]
+                    ].filter(linha => linha.some(celula => celula.trim() !== "")) // Adiciona linha apenas se houver algum dado
+                }
+            };
+            
+            // Se não houver dados nas especificações simplificadas, remove a estrutura.
+            if (novoProduto.especificacoes.linhas.length === 0) {
+                 novoProduto.especificacoes = { cabecalhos: [], linhas: [] };
+            }
+
+
+            produtos.unshift(novoProduto); // Adiciona no início da lista
+            renderizarListaProdutos();
+            addProductModalEl.classList.add('hidden');
+        };
+
+
+        // --- Inicialização ---
+        document.addEventListener('DOMContentLoaded', () => {
+            populatePaletteSelector();
+            applyPalette(paletas[0]); 
+            botaoVoltarListaEl.onclick = mostrarListaProdutos;
+            if(currentYearEl) {
+                currentYearEl.textContent = new Date().getFullYear();
+            }
+        });
+    </script>
+</body>
+</html>
