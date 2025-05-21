@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo de Equipamentos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Azul pastel bem claro */
+        }
+        .pastel-bg-card { background-color: #ffffff; }
+        .pastel-bg-header { background-color: #e0e7ff; } /* Lilás pastel */
+        .pastel-text-primary { color: #374151; } /* Cinza escuro */
+        .pastel-text-secondary { color: #4b5563; } /* Cinza médio */
+        .pastel-button { background-color: #a7f3d0; /* Verde pastel */ color: #047857; /* Verde escuro */ }
+        .pastel-button-alt { background-color: #bfdbfe; /* Azul pastel */ color: #1e40af; /* Azul escuro */ }
+        .pastel-button-danger { background-color: #fecaca; /* Vermelho pastel */ color: #b91c1c; /* Vermelho escuro */ }
+
+        .modal {
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+        }
+        .modal-content {
+            transition: transform 0.3s ease-in-out;
+        }
+        .product-card {
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        }
+        .product-card:hover {
+            transform: translateY(-5px) scale(1.03);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        /* Estilo para a barra de rolagem */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f0f4f8; /* Cor do fundo da página */
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; /* Cinza pastel */
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; /* Cinza pastel mais escuro */
+        }
+        /* Animação de entrada suave para os cards */
+        @keyframes fadeInScaleUp {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        .animate-fadeInScaleUp {
+            animation: fadeInScaleUp 0.5s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="pastel-text-primary">
+
+    <div id="appContainer" class="container mx-auto p-4 md:p-8">
+
+        <header class="pastel-bg-header p-6 rounded-xl shadow-md mb-8 text-center">
+            <h1 class="text-3xl md:text-4xl font-bold pastel-text-primary">Catálogo de Equipamentos</h1>
+            <p class="text-sm pastel-text-secondary mt-2">Seu ID de Usuário (para fins de colaboração): <span id="userIdDisplay" class="font-mono">Carregando...</span></p>
+        </header>
+
+        <main id="mainContent">
+            <div id="productGridContainer">
+                <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+                    <div class="w-full sm:w-auto">
+                        <h2 class="text-2xl font-semibold pastel-text-primary text-center sm:text-left">Nossos Produtos</h2>
+                    </div>
+                    <div class="w-full sm:w-1/2 lg:w-1/3">
+                        <input type="text" id="searchInput" placeholder="Pesquisar por nome ou referência..." class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-300 focus:border-sky-300 transition-shadow">
+                    </div>
+                    <button id="addProductBtnProtected" class="pastel-button hover:bg-emerald-300 font-semibold py-2 px-4 rounded-lg shadow-md transition duration-150 ease-in-out w-full sm:w-auto">
+                        Adicionar Novo Produto
+                    </button>
+                </div>
+                <div id="productGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    </div>
+                <p id="loadingMessage" class="text-center pastel-text-secondary py-10">Carregando produtos...</p>
+                <p id="noResultsMessage" class="text-center pastel-text-secondary py-10 hidden">Nenhum produto encontrado com os critérios da busca.</p>
+            </div>
+
+            <div id="productDetailContainer" class="hidden pastel-bg-card p-6 md:p-8 rounded-xl shadow-xl">
+                </div>
+        </main>
+
+        <div id="passwordModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 modal hidden z-[60] opacity-0 transform scale-95">
+            <div class="modal-content pastel-bg-card rounded-xl shadow-2xl p-6 md:p-8 w-full max-w-sm transform scale-95">
+                <h3 class="text-xl font-semibold mb-4 pastel-text-primary">Acesso Restrito</h3>
+                <p class="text-sm pastel-text-secondary mb-4">Por favor, insira a senha para continuar.</p>
+                <input type="password" id="passwordInput" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-400 focus:border-red-400 transition-shadow mb-4" placeholder="Senha">
+                <p id="passwordError" class="text-red-500 text-xs mb-4 hidden">Senha incorreta. Tente novamente.</p>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" id="cancelPasswordBtn" class="pastel-button-danger hover:bg-red-300 font-semibold py-2 px-4 rounded-lg shadow-md transition duration-150">Cancelar</button>
+                    <button type="button" id="confirmPasswordBtn" class="pastel-button hover:bg-emerald-300 font-semibold py-2 px-4 rounded-lg shadow-md transition duration-150">Confirmar</button>
+                </div>
+            </div>
+        </div>
+
+
+        <div id="addEditModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 modal hidden z-50 opacity-0 transform scale-95">
+            <div class="modal-content pastel-bg-card rounded-xl shadow-2xl p-6 md:p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto transform scale-95">
+                <h3 id="modalTitle" class="text-2xl font-semibold mb-6 pastel-text-primary">Adicionar Novo Produto</h3>
+                <form id="productForm">
+                    <input type="hidden" id="productId">
+                    <div class="mb-4">
+                        <label for="productName" class="block text-sm font-medium pastel-text-secondary mb-1">Nome do Produto</label>
+                        <input type="text" id="productName" name="productName" required class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-300 focus:border-sky-300 transition-shadow" placeholder="Ex: Conservador de Proteínas">
+                    </div>
+                    <div class="mb-4">
+                        <label for="productReference" class="block text-sm font-medium pastel-text-secondary mb-1">Referência</label>
+                        <input type="text" id="productReference" name="productReference" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-300 focus:border-sky-300 transition-shadow" placeholder="Ex: PRCPROT-04">
+                    </div>
+                    <div class="mb-4">
+                        <label for="productImageUrl" class="block text-sm font-medium pastel-text-secondary mb-1">URL da Imagem</label>
+                        <input type="url" id="productImageUrl" name="productImageUrl" required class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-300 focus:border-sky-300 transition-shadow" placeholder="https://exemplo.com/imagem.jpg">
+                         <p class="text-xs pastel-text-secondary mt-1">Dica: Use <a href="https://placehold.co/" target="_blank" class="text-sky-500 hover:underline">placehold.co</a> para imagens provisórias. Ex: https://placehold.co/400x300/E0F2F7/333333?text=Nome+Produto</p>
+                    </div>
+                    <div class="mb-4">
+                        <label for="productDescription" class="block text-sm font-medium pastel-text-secondary mb-1">Descrição/Diferenciais (um por linha)</label>
+                        <textarea id="productDescription" name="productDescription" rows="4" required class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-300 focus:border-sky-300 transition-shadow" placeholder="Diferencial 1&#10;Diferencial 2&#10;Diferencial 3"></textarea>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium pastel-text-secondary mb-1">Especificações Técnicas</label>
+                        <div id="specsContainer">
+                            </div>
+                        <button type="button" id="addSpecBtn" class="mt-2 pastel-button-alt hover:bg-sky-300 text-sm py-2 px-3 rounded-lg shadow transition duration-150">Adicionar Especificação</button>
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" id="cancelModalBtn" class="pastel-button-danger hover:bg-red-300 font-semibold py-2 px-4 rounded-lg shadow-md transition duration-150">Cancelar</button>
+                        <button type="submit" id="saveProductBtn" class="pastel-button hover:bg-emerald-300 font-semibold py-2 px-4 rounded-lg shadow-md transition duration-150">Salvar Produto</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="toastNotification" class="fixed bottom-5 right-5 bg-emerald-500 text-white py-3 px-5 rounded-lg shadow-xl text-sm transition-all duration-300 opacity-0 translate-y-10 z-[70]">
+            Mensagem do Toast!
+        </div>
+
+    </div>
+
+    <script type="module">
+        // Importações do Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { 
+            getAuth, 
+            signInAnonymously, 
+            signInWithCustomToken, 
+            onAuthStateChanged 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { 
+            getFirestore, 
+            collection, 
+            addDoc, 
+            getDocs, 
+            doc, 
+            getDoc, 
+            setDoc, 
+            deleteDoc, 
+            query, 
+            onSnapshot,
+            setLogLevel
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Configuração do Firebase (usando variáveis globais injetadas)
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        
+        let app;
+        let auth;
+        let db;
+        let userId = null;
+        let isAuthReady = false;
+        let allProductsData = []; // Para armazenar todos os produtos para filtragem
+        let currentPasswordProtectedAction = null; // Para armazenar a ação a ser executada após a senha
+
+        const REQUIRED_PASSWORD = "Braesi2025";
+
+        // Elementos da UI
+        const productGrid = document.getElementById('productGrid');
+        const productDetailContainer = document.getElementById('productDetailContainer');
+        const productGridContainer = document.getElementById('productGridContainer');
+        const addProductBtnProtected = document.getElementById('addProductBtnProtected'); // Novo ID
+        const addEditModal = document.getElementById('addEditModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const productForm = document.getElementById('productForm');
+        const cancelModalBtn = document.getElementById('cancelModalBtn');
+        const specsContainer = document.getElementById('specsContainer');
+        const addSpecBtn = document.getElementById('addSpecBtn');
+        const loadingMessage = document.getElementById('loadingMessage');
+        const noResultsMessage = document.getElementById('noResultsMessage');
+        const userIdDisplay = document.getElementById('userIdDisplay');
+        const toastNotification = document.getElementById('toastNotification');
+        const searchInput = document.getElementById('searchInput');
+
+        // Elementos do Modal de Senha
+        const passwordModal = document.getElementById('passwordModal');
+        const passwordInput = document.getElementById('passwordInput');
+        const confirmPasswordBtn = document.getElementById('confirmPasswordBtn');
+        const cancelPasswordBtn = document.getElementById('cancelPasswordBtn');
+        const passwordError = document.getElementById('passwordError');
+
+
+        // Dados iniciais (para popular o Firestore se estiver vazio)
+        const initialProducts = [
+            {
+                name: 'Conservador de Proteínas',
+                reference: 'PRCPROT-04',
+                imageUrl: 'https://placehold.co/400x300/E0F2F7/333333?text=Conservador+Proteínas',
+                description: [
+                    'Evita a necessidade de grelhar ou fritar proteínas na hora',
+                    'Mantém a suculência e sabor dos alimentos, evitando ressecamento e superaquecimento',
+                    'Opera em até 80°C abaixo do ponto de cocção',
+                    'Design intuitivo para manuseio rápido e seguro'
+                ],
+                specs: [
+                    { label: 'Medidas (AxLxP)', value: '405x571x531 mm' },
+                    { label: 'Peso liq.', value: '20,5 kg' },
+                    { label: 'Capacidade', value: '4 cubas' },
+                    { label: 'Potência', value: '800 W' },
+                    { label: 'Consumo elétrico', value: '0,4 kWh' }
+                ]
+            },
+            {
+                name: 'Estufa Quadrada',
+                reference: 'PRVR-30',
+                imageUrl: 'https://placehold.co/400x300/FFF9C4/333333?text=Estufa+Quadrada',
+                description: [
+                    'Cubas (gavetas) GN 1/3x100 mm com cabo de borracha',
+                    'Controles individuais por prateleira',
+                    'Pés de borracha com regulagem'
+                ],
+                specs: [
+                    { label: 'Medidas (AxLxP)', value: '340x470x375 mm' },
+                    { label: 'Tensão', value: '127 ou 220 V' },
+                    { label: 'Bandejas', value: '3' },
+                    { label: 'Potência', value: '250 W' },
+                    { label: 'Consumo médio', value: '0,19 kWh' }
+                ]
+            },
+            {
+                name: 'Char Broiler',
+                reference: 'PRCB-2100',
+                imageUrl: 'https://placehold.co/400x300/FFCDD2/333333?text=Char+Broiler',
+                description: [
+                    'Alimentação de gás em baixa pressão',
+                    'Grelhas esmaltadas, removíveis, antiaderentes e autolimpantes',
+                    'Queimador com gaveta móvel para maior praticidade no acendimento e manutenção',
+                    'Pedestal opcional somente para o modelo PRCB-2100'
+                ],
+                specs: [
+                    { label: 'Medidas (AxLxP)', value: '225x1026x537 mm' },
+                    { label: 'Peso liq.', value: '3 kg' },
+                    { label: 'Consumo', value: '1200 kg/h GLP' }
+                ]
+            },
+             {
+                name: 'Forno Esteira para Pizza Híbrido',
+                reference: 'PRFE-400 NEW HÍBRIDO',
+                imageUrl: 'https://placehold.co/400x300/D1C4E9/333333?text=Forno+Pizza+Híbrido',
+                description: [
+                    'Queimador infravermelho com acendimento automático (somente modelo gás)',
+                    'Controle automático de tempo e temperatura do aquecimento inferior',
+                    'Controle de temperatura individual superior e inferior',
+                    'Modelo PRFE-400 NH superior gás e inferior elétrico com temperatura máxima de 400°C'
+                ],
+                specs: [
+                    { label: 'Medidas (AxLxP)', value: '498x1410x808 mm' },
+                    { label: 'Peso liq.', value: '66 kg' },
+                    { label: 'Tensão', value: '220V monofásico, 200V ou 380V trifásico' },
+                    { label: 'Consumo elétrico', value: '5,4 kWh' }
+                ]
+            }
+        ];
+
+        // Função para mostrar Toast
+        function showToast(message, isError = false) {
+            toastNotification.textContent = message;
+            toastNotification.classList.remove('opacity-0', 'translate-y-10');
+            if (isError) {
+                toastNotification.classList.remove('bg-emerald-500');
+                toastNotification.classList.add('bg-red-500');
+            } else {
+                toastNotification.classList.remove('bg-red-500');
+                toastNotification.classList.add('bg-emerald-500');
+            }
+            setTimeout(() => {
+                toastNotification.classList.add('opacity-0', 'translate-y-10');
+            }, 3000);
+        }
+
+        // --- Funções de Senha ---
+        function openPasswordModal(actionCallback) {
+            currentPasswordProtectedAction = actionCallback;
+            passwordInput.value = '';
+            passwordError.classList.add('hidden');
+            passwordModal.classList.remove('hidden');
+            setTimeout(() => {
+                passwordModal.classList.remove('opacity-0', 'scale-95');
+                passwordModal.querySelector('.modal-content').classList.remove('scale-95');
+                passwordInput.focus();
+            }, 10);
+        }
+
+        function closePasswordModal() {
+            passwordModal.classList.add('opacity-0', 'scale-95');
+            passwordModal.querySelector('.modal-content').classList.add('scale-95');
+            setTimeout(() => {
+                passwordModal.classList.add('hidden');
+            }, 300);
+        }
+
+        confirmPasswordBtn.addEventListener('click', () => {
+            if (passwordInput.value === REQUIRED_PASSWORD) {
+                closePasswordModal();
+                if (typeof currentPasswordProtectedAction === 'function') {
+                    currentPasswordProtectedAction();
+                }
+                currentPasswordProtectedAction = null; 
+            } else {
+                passwordError.classList.remove('hidden');
+                passwordInput.focus();
+                // Adiciona um pequeno tremor para feedback visual
+                passwordModal.querySelector('.modal-content').classList.add('animate-shake');
+                setTimeout(() => {
+                    passwordModal.querySelector('.modal-content').classList.remove('animate-shake');
+                }, 500);
+            }
+        });
+        // Adiciona a animação de shake ao CSS (pode ser em <style> ou arquivo CSS)
+        const styleSheet = document.createElement("style")
+        styleSheet.type = "text/css"
+        styleSheet.innerText = `@keyframes shake { 0% { transform: translateX(0); } 25% { transform: translateX(-5px); } 50% { transform: translateX(5px); } 75% { transform: translateX(-5px); } 100% { transform: translateX(0); } } .animate-shake { animation: shake 0.3s ease-in-out; }`;
+        document.head.appendChild(styleSheet);
+
+        cancelPasswordBtn.addEventListener('click', closePasswordModal);
+        passwordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                confirmPasswordBtn.click();
+            }
+        });
+        // --- Fim Funções de Senha ---
+
+
+        // Inicializar Firebase e Autenticação
+        async function initializeFirebase() {
+            if (!firebaseConfig) {
+                console.error("Configuração do Firebase não encontrada!");
+                loadingMessage.textContent = "Erro: Configuração do Firebase não encontrada.";
+                showToast("Erro: Configuração do Firebase não encontrada!", true);
+                return;
+            }
+            try {
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                setLogLevel('debug'); 
+
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        console.log("Usuário autenticado:", userId);
+                        userIdDisplay.textContent = userId;
+                    } else {
+                        console.log("Nenhum usuário autenticado, tentando login anônimo.");
+                        try {
+                            const userCredential = await signInAnonymously(auth);
+                            userId = userCredential.user.uid;
+                            console.log("Login anônimo bem-sucedido:", userId);
+                            userIdDisplay.textContent = userId + " (Anônimo)";
+                        } catch (error) {
+                            console.error("Erro no login anônimo:", error);
+                            userIdDisplay.textContent = "Falha na autenticação";
+                            showToast("Falha ao autenticar anonimamente.", true);
+                            return; 
+                        }
+                    }
+                    isAuthReady = true;
+                    console.log("Auth Ready. UserID:", userId);
+                    await loadAndRenderProducts(); // Agora carrega e renderiza
+                    await populateInitialDataIfNeeded(); 
+                });
+                
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    console.log("Tentando login com token customizado...");
+                    try {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                         console.log("Login com token customizado bem-sucedido.");
+                    } catch (error) {
+                        console.error("Erro no login com token customizado:", error, "Tentando login anônimo.");
+                        if (!auth.currentUser) { 
+                            await signInAnonymously(auth).catch(e => {
+                                console.error("Erro no fallback para login anônimo:", e);
+                                showToast("Falha crítica na autenticação.", true);
+                            });
+                        }
+                    }
+                } else if (!auth.currentUser) { 
+                     console.log("Token customizado não definido, onAuthStateChanged cuidará do login anônimo se necessário.");
+                }
+            } catch (error) {
+                console.error("Erro ao inicializar Firebase:", error);
+                loadingMessage.textContent = "Erro ao conectar com o banco de dados.";
+                showToast("Erro ao inicializar Firebase.", true);
+            }
+        }
+
+        async function populateInitialDataIfNeeded() {
+            if (!db || !isAuthReady || !userId) {
+                 console.warn("Firestore não pronto ou usuário não autenticado para popular dados.");
+                 return;
+            }
+            const productsCol = collection(db, `artifacts/${appId}/public/data/products`);
+            try {
+                const snapshot = await getDocs(productsCol);
+                if (snapshot.empty) {
+                    console.log("Nenhum produto encontrado. Populando com dados iniciais...");
+                    for (const productData of initialProducts) {
+                        await addDoc(productsCol, productData);
+                    }
+                    console.log("Dados iniciais populados.");
+                    showToast("Catálogo inicializado com alguns produtos de exemplo!");
+                    // loadAndRenderProducts(); // onSnapshot já deve cuidar disso após a adição
+                } else {
+                    console.log("Produtos já existem no banco de dados.");
+                }
+            } catch (error) {
+                console.error("Erro ao verificar ou popular dados iniciais:", error);
+                showToast("Erro ao carregar dados iniciais.", true);
+            }
+        }
+        
+        // Carregar Produtos do Firestore e renderizar com filtro
+        async function loadAndRenderProducts() {
+            if (!db || !isAuthReady || !userId) {
+                loadingMessage.textContent = "Aguardando autenticação para carregar produtos...";
+                console.warn("Firestore não pronto ou usuário não autenticado para carregar produtos.");
+                return;
+            }
+            loadingMessage.classList.remove('hidden');
+            noResultsMessage.classList.add('hidden');
+            productGrid.innerHTML = ''; 
+
+            const productsCol = collection(db, `artifacts/${appId}/public/data/products`);
+            
+            onSnapshot(query(productsCol), (snapshot) => {
+                allProductsData = []; // Limpa dados antigos
+                snapshot.forEach((docSnap) => {
+                    const product = docSnap.data();
+                    product.id = docSnap.id;
+                    allProductsData.push(product);
+                });
+                filterAndRenderProducts(); // Chama a função que aplica o filtro e renderiza
+            }, (error) => {
+                console.error("Erro ao carregar produtos em tempo real:", error);
+                loadingMessage.textContent = "Erro ao carregar produtos.";
+                showToast("Erro ao carregar produtos.", true);
+                allProductsData = []; // Limpa em caso de erro também
+                filterAndRenderProducts(); // Tenta renderizar (mostrará mensagem de vazio)
+            });
+        }
+
+        function filterAndRenderProducts() {
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            productGrid.innerHTML = ''; // Limpa grid antes de renderizar
+
+            const filteredProducts = allProductsData.filter(product => {
+                const nameMatch = product.name.toLowerCase().includes(searchTerm);
+                const referenceMatch = product.reference ? product.reference.toLowerCase().includes(searchTerm) : false;
+                return nameMatch || referenceMatch;
+            });
+
+            if (allProductsData.length === 0 && searchTerm === '') {
+                 loadingMessage.textContent = 'Nenhum produto cadastrado ainda. Clique em "Adicionar Novo Produto".';
+                 loadingMessage.classList.remove('hidden');
+                 noResultsMessage.classList.add('hidden');
+            } else if (filteredProducts.length === 0) {
+                loadingMessage.classList.add('hidden');
+                noResultsMessage.classList.remove('hidden');
+            } else {
+                loadingMessage.classList.add('hidden');
+                noResultsMessage.classList.add('hidden');
+                let delay = 0;
+                filteredProducts.forEach(product => {
+                    const card = createProductCard(product, delay);
+                    productGrid.appendChild(card);
+                    delay += 100; 
+                });
+            }
+        }
+        searchInput.addEventListener('input', filterAndRenderProducts);
+
+
+        // Criar Card do Produto
+        function createProductCard(product, animationDelay) {
+            const card = document.createElement('div');
+            card.className = 'product-card pastel-bg-card rounded-xl shadow-lg overflow-hidden cursor-pointer flex flex-col justify-between animate-fadeInScaleUp';
+            card.style.animationDelay = `${animationDelay}ms`;
+            
+            const imageUrl = product.imageUrl || `https://placehold.co/400x300/E0F2F7/333333?text=${encodeURIComponent(product.name)}`;
+            
+            card.innerHTML = `
+                <img src="${imageUrl}" alt="Imagem de ${product.name}" class="w-full h-48 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/400x300/CCCCCC/999999?text=Imagem+Indisponível';">
+                <div class="p-5 flex-grow">
+                    <h3 class="text-xl font-semibold pastel-text-primary mb-2 truncate" title="${product.name}">${product.name}</h3>
+                    <p class="text-sm pastel-text-secondary truncate" title="${product.reference || ''}">${product.reference || 'Sem referência'}</p>
+                </div>
+                <div class="p-5 border-t border-slate-200">
+                     <button data-id="${product.id}" class="view-details-btn w-full pastel-button-alt hover:bg-sky-300 text-sm font-medium py-2 px-4 rounded-lg shadow transition duration-150">Ver Detalhes</button>
+                </div>
+            `;
+            card.querySelector('.view-details-btn').addEventListener('click', (e) => {
+                e.stopPropagation(); 
+                viewProductDetails(product.id);
+            });
+            card.addEventListener('click', () => viewProductDetails(product.id));
+            return card;
+        }
+
+        // Visualizar Detalhes do Produto
+        async function viewProductDetails(productId) {
+            if (!db || !isAuthReady || !userId) return;
+            const productDocRef = doc(db, `artifacts/${appId}/public/data/products`, productId);
+            try {
+                const docSnap = await getDoc(productDocRef);
+                if (docSnap.exists()) {
+                    const product = docSnap.data();
+                    product.id = docSnap.id;
+                    renderProductDetails(product);
+                    productGridContainer.classList.add('hidden');
+                    productDetailContainer.classList.remove('hidden');
+                    productDetailContainer.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    console.error("Produto não encontrado!");
+                    showToast("Produto não encontrado!", true);
+                }
+            } catch (error) {
+                console.error("Erro ao buscar detalhes do produto:", error);
+                showToast("Erro ao buscar detalhes do produto.", true);
+            }
+        }
+
+        // Renderizar Detalhes do Produto
+        function renderProductDetails(product) {
+            const imageUrl = product.imageUrl || `https://placehold.co/600x400/E0F2F7/333333?text=${encodeURIComponent(product.name)}`;
+            let descriptionHtml = '';
+            if (product.description && Array.isArray(product.description)) {
+                descriptionHtml = product.description.map(item => `<li class="pastel-text-secondary">${item}</li>`).join('');
+            } else if (product.description) { 
+                 descriptionHtml = `<li class="pastel-text-secondary">${product.description}</li>`;
+            }
+
+            let specsHtml = '<p class="pastel-text-secondary">Nenhuma especificação técnica disponível.</p>';
+            if (product.specs && product.specs.length > 0) {
+                specsHtml = `
+                    <div class="overflow-x-auto rounded-lg border border-slate-200">
+                        <table class="min-w-full divide-y divide-slate-200">
+                            <thead class="bg-slate-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium pastel-text-secondary uppercase tracking-wider">Característica</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium pastel-text-secondary uppercase tracking-wider">Valor</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-slate-200">
+                                ${product.specs.map(spec => `
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium pastel-text-primary">${spec.label}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm pastel-text-secondary">${spec.value}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+
+            productDetailContainer.innerHTML = `
+                <button id="backToGridBtn" class="mb-6 pastel-button-alt hover:bg-sky-300 text-sm font-medium py-2 px-4 rounded-lg shadow transition duration-150">&larr; Voltar para a Lista</button>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                    <div>
+                        <img src="${imageUrl}" alt="Imagem de ${product.name}" class="w-full rounded-xl shadow-lg object-cover" onerror="this.onerror=null;this.src='https://placehold.co/600x400/CCCCCC/999999?text=Imagem+Indisponível';">
+                    </div>
+                    <div>
+                        <h2 class="text-3xl font-bold pastel-text-primary mb-3">${product.name}</h2>
+                        <p class="text-md pastel-text-secondary mb-1">Referência: ${product.reference || 'N/A'}</p>
+                        
+                        <h4 class="text-lg font-semibold pastel-text-primary mt-6 mb-2">Diferenciais/Descrição:</h4>
+                        <ul class="list-disc list-inside space-y-1 mb-6">
+                            ${descriptionHtml}
+                        </ul>
+
+                        <div class="flex space-x-3 mt-6">
+                             <button id="editProductDetailBtnProtected" data-id="${product.id}" class="pastel-button hover:bg-emerald-300 font-semibold py-2 px-4 rounded-lg shadow-md transition duration-150">Editar Produto</button>
+                             <button id="deleteProductDetailBtnProtected" data-id="${product.id}" data-name="${product.name}" class="pastel-button-danger hover:bg-red-300 font-semibold py-2 px-4 rounded-lg shadow-md transition duration-150">Excluir Produto</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-8">
+                    <h4 class="text-xl font-semibold pastel-text-primary mb-3">Especificações Técnicas:</h4>
+                    ${specsHtml}
+                </div>
+            `;
+
+            document.getElementById('backToGridBtn').addEventListener('click', showProductGrid);
+            document.getElementById('editProductDetailBtnProtected').addEventListener('click', (e) => {
+                openPasswordModal(() => openModal(product));
+            });
+            document.getElementById('deleteProductDetailBtnProtected').addEventListener('click', (e) => {
+                 openPasswordModal(() => confirmDeleteProduct(product.id, product.name));
+            });
+        }
+        
+        function confirmDeleteProduct(productId, productName) {
+            // Substituído window.prompt por um modal customizado, mas como é chamado após senha, podemos simplificar
+            // Para este fluxo, a senha já foi validada.
+            // Idealmente, teríamos um modal de confirmação customizado aqui também.
+            // Por ora, vamos usar um prompt simples, sabendo que pode ser bloqueado.
+            // Se for bloqueado, a exclusão não ocorrerá.
+            // Uma melhoria seria criar um modal de confirmação visual.
+            const userConfirmation = window.prompt(`Tem certeza que deseja excluir o produto "${productName}"? Esta ação não pode ser desfeita. Digite "EXCLUIR" para confirmar.`);
+            if (userConfirmation === "EXCLUIR") {
+                deleteProduct(productId);
+            } else if (userConfirmation !== null) { 
+                showToast("Exclusão cancelada. Confirmação incorreta.", true);
+            } else { 
+                 showToast("Exclusão cancelada.", false);
+            }
+        }
+
+
+        async function deleteProduct(productId) {
+            if (!db || !isAuthReady || !userId) return;
+            const productDocRef = doc(db, `artifacts/${appId}/public/data/products`, productId);
+            try {
+                await deleteDoc(productDocRef);
+                showToast("Produto excluído com sucesso!");
+                showProductGrid(); 
+            } catch (error) {
+                console.error("Erro ao excluir produto:", error);
+                showToast("Erro ao excluir produto.", true);
+            }
+        }
+
+
+        function showProductGrid() {
+            productDetailContainer.classList.add('hidden');
+            productGridContainer.classList.remove('hidden');
+            productGridContainer.scrollIntoView({ behavior: 'smooth' });
+            filterAndRenderProducts(); // Re-renderiza a grid, aplicando filtro atual
+        }
+
+        function openModal(productToEdit = null) {
+            productForm.reset();
+            specsContainer.innerHTML = ''; 
+            document.getElementById('productId').value = '';
+
+            if (productToEdit) {
+                modalTitle.textContent = 'Editar Produto';
+                document.getElementById('productId').value = productToEdit.id;
+                document.getElementById('productName').value = productToEdit.name;
+                document.getElementById('productReference').value = productToEdit.reference || '';
+                document.getElementById('productImageUrl').value = productToEdit.imageUrl;
+                document.getElementById('productDescription').value = Array.isArray(productToEdit.description) ? productToEdit.description.join('\n') : (productToEdit.description || '');
+                
+                if (productToEdit.specs && productToEdit.specs.length > 0) {
+                    productToEdit.specs.forEach(spec => addSpecInput(spec.label, spec.value));
+                } else {
+                    addSpecInput(); 
+                }
+            } else {
+                modalTitle.textContent = 'Adicionar Novo Produto';
+                addSpecInput(); 
+            }
+            addEditModal.classList.remove('hidden');
+            setTimeout(() => { 
+                addEditModal.classList.remove('opacity-0', 'scale-95');
+                addEditModal.querySelector('.modal-content').classList.remove('scale-95');
+            }, 10);
+        }
+
+        function closeModal() {
+            addEditModal.classList.add('opacity-0', 'scale-95');
+            addEditModal.querySelector('.modal-content').classList.add('scale-95');
+            setTimeout(() => {
+                addEditModal.classList.add('hidden');
+            }, 300);
+        }
+
+        function addSpecInput(label = '', value = '') {
+            const specDiv = document.createElement('div');
+            specDiv.className = 'flex space-x-2 mb-2 items-center';
+            specDiv.innerHTML = `
+                <input type="text" placeholder="Característica (Ex: Potência)" value="${label}" class="spec-label w-1/2 p-2 border border-slate-300 rounded-md focus:ring-1 focus:ring-sky-300 focus:border-sky-300 text-sm">
+                <input type="text" placeholder="Valor (Ex: 800 W)" value="${value}" class="spec-value w-1/2 p-2 border border-slate-300 rounded-md focus:ring-1 focus:ring-sky-300 focus:border-sky-300 text-sm">
+                <button type="button" class="remove-spec-btn pastel-button-danger text-xs p-2 rounded-md">&times;</button>
+            `;
+            specsContainer.appendChild(specDiv);
+            specDiv.querySelector('.remove-spec-btn').addEventListener('click', () => {
+                specDiv.remove();
+            });
+        }
+        addSpecBtn.addEventListener('click', () => addSpecInput());
+
+        productForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!db || !isAuthReady || !userId) {
+                showToast("Não foi possível salvar. Verifique a conexão e autenticação.", true);
+                return;
+            }
+
+            const id = document.getElementById('productId').value;
+            const name = document.getElementById('productName').value;
+            const reference = document.getElementById('productReference').value;
+            const imageUrl = document.getElementById('productImageUrl').value;
+            const descriptionText = document.getElementById('productDescription').value;
+            const descriptionArray = descriptionText.split('\n').map(line => line.trim()).filter(line => line);
+
+            const specs = [];
+            const specInputs = specsContainer.querySelectorAll('.flex');
+            specInputs.forEach(div => {
+                const label = div.querySelector('.spec-label').value.trim();
+                const value = div.querySelector('.spec-value').value.trim();
+                if (label && value) {
+                    specs.push({ label, value });
+                }
+            });
+
+            const productData = { name, reference, imageUrl, description: descriptionArray, specs, lastUpdatedBy: userId, lastUpdatedAt: new Date().toISOString() };
+
+            try {
+                const productsCol = collection(db, `artifacts/${appId}/public/data/products`);
+                if (id) { 
+                    const productDocRef = doc(db, `artifacts/${appId}/public/data/products`, id);
+                    await setDoc(productDocRef, productData, { merge: true }); 
+                    showToast("Produto atualizado com sucesso!");
+                } else { 
+                    await addDoc(productsCol, productData);
+                    showToast("Produto adicionado com sucesso!");
+                }
+                closeModal();
+                
+                if (id) { 
+                    if (!productDetailContainer.classList.contains('hidden') && productDetailContainer.querySelector(`[data-id="${id}"]`)) { // Se estava na página de detalhes do produto editado
+                         viewProductDetails(id); 
+                    } else if (!productDetailContainer.classList.contains('hidden')) { 
+                        showProductGrid();
+                    }
+                }
+                // Se não estava editando (era adição) ou se estava na grid, o onSnapshot já atualiza a grid.
+            } catch (error) {
+                console.error("Erro ao salvar produto:", error);
+                showToast(`Erro ao salvar produto: ${error.message}`, true);
+            }
+        });
+
+        // Event Listeners
+        addProductBtnProtected.addEventListener('click', () => {
+            openPasswordModal(() => openModal());
+        });
+        cancelModalBtn.addEventListener('click', closeModal);
+        
+        // Inicialização
+        initializeFirebase();
+
+    </script>
+</body>
+</html>
